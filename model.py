@@ -44,6 +44,22 @@ split_idx = int(len(tokenized_text) * 0.9)
 train_data = tokenized_text[:split_idx]
 val_data = tokenized_text[split_idx:]
 
+'''
+前馈神经网络（FeedForward Neural Network, FFN）是神经网络中的一种基础结构，主要用于处理输入的特征并通过全连接层（Linear Layers）进行信息的变换。其作用可以概括为：
+
+1. 特征变换与非线性映射
+前馈网络通过一系列的全连接层进行线性变换，将输入的特征空间从原始的维度映射到更高或更低的维度。通常会通过激活函数（如 ReLU）加入非线性，使得网络能够学习到复杂的特征。
+
+2. 数据的扩展与压缩
+在你提供的代码中，前馈网络的设计将输入 d_model 映射到 d_model * 4（扩展至更高维度），然后通过激活函数学习非线性特征，再将维度压缩回 d_model。这种结构使得网络能够在较大的特征空间中学习更多的表示，然后再将其压缩回原来的维度，以便与其他网络模块结合。
+
+3. 防止过拟合
+Dropout 操作在前馈网络中被用来减少过拟合，通过随机丢弃部分神经元的输出，增加模型的泛化能力。
+
+4. 作用在注意力机制中的配合
+在你提供的代码中，前馈网络被嵌入到更复杂的架构中，例如与注意力机制（Attention）结合。通常，前馈网络用于对每个注意力模块的输出进行进一步的处理。具体来说，注意力模块主要关注输入特征之间的关系，而前馈网络则负责通过非线性变换进一步提取特征。
+'''
+
 
 # 定义前馈神经网络模块（Feed Forward Network）
 class FeedForward(nn.Module):
@@ -181,8 +197,8 @@ class TransformerLanguageModel(nn.Module):
 
         # Transformer 块：由多个 TransformerBlock 组成，并在最后加一个 LayerNorm
         self.transformer_blocks = nn.Sequential(*(
-            [TransformerBlock(num_heads=self.num_heads) for _ in range(self.num_blocks)] +
-            [nn.LayerNorm(self.d_model)]  # 最后加一个 LayerNorm
+                [TransformerBlock(num_heads=self.num_heads) for _ in range(self.num_blocks)] +
+                [nn.LayerNorm(self.d_model)]  # 最后加一个 LayerNorm
         ))
 
         # 输出线性层：将隐藏状态映射到词汇表大小的维度上
@@ -251,11 +267,11 @@ class TransformerLanguageModel(nn.Module):
         return idx
 
 
-
 # 初始化 Transformer 模型实例
 model = TransformerLanguageModel()
 # 将模型转移到指定设备（如 GPU 或 CPU）
 model = model.to(device)
+
 
 # 获取输入数据的批次（用于训练或验证）
 def get_batch(split: str):
@@ -271,6 +287,7 @@ def get_batch(split: str):
     x = torch.stack([data[idx:idx + context_length] for idx in idxs]).to(device)
     y = torch.stack([data[idx + 1:idx + context_length + 1] for idx in idxs]).to(device)
     return x, y
+
 
 # 估算训练和验证集的平均损失
 @torch.no_grad()  # 禁用梯度计算以提高效率
@@ -292,6 +309,7 @@ def estimate_loss():
         out[split] = losses.mean()
     model.train()  # 恢复模型为训练模式
     return out
+
 
 # 定义 AdamW 优化器
 optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
