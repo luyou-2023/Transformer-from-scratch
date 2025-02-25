@@ -282,10 +282,14 @@ def get_batch(split: str):
     # 根据 split 参数选择训练或验证数据
     data = train_data if split == 'train' else val_data
     # 随机生成索引，用于从数据中提取连续的 context_length 长度的序列
+    # 随机生成索引，用于从数据中提取连续的 context_length 长度的序列
     idxs = torch.randint(low=0, high=len(data) - context_length, size=(batch_size,))
+    # 使用生成的索引创建输入数据 x
     # 使用生成的索引创建输入数据和目标数据
     x = torch.stack([data[idx:idx + context_length] for idx in idxs]).to(device)
+    # 使用生成的索引创建目标数据 y，y 是从 x 的下一个单词开始
     y = torch.stack([data[idx + 1:idx + context_length + 1] for idx in idxs]).to(device)
+    # 返回输入和目标数据
     return x, y
 
 
